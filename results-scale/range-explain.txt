@@ -1,0 +1,25 @@
+Limit  (cost=3.94..3031.72 rows=1000 width=51) (actual time=0.203..2.605 rows=1000.00 loops=1)
+  Buffers: shared hit=3975
+  ->  Incremental Sort  (cost=3.94..54531.20 rows=18009 width=51) (actual time=0.202..2.545 rows=1000.00 loops=1)
+        Sort Key: t.created_at DESC, t.id DESC
+        Presorted Key: t.created_at
+        Full-sort Groups: 30  Sort Method: quicksort  Average Memory: 29kB  Peak Memory: 29kB
+        Buffers: shared hit=3975
+        ->  Nested Loop  (cost=0.71..53766.89 rows=18009 width=51) (actual time=0.022..2.304 rows=1003.00 loops=1)
+              Buffers: shared hit=3966
+              ->  Index Scan Backward using lab_transactions_created_at_idx on transactions t  (cost=0.42..47511.56 rows=18140 width=51) (actual time=0.012..1.199 rows=1013.00 loops=1)
+                    Index Cond: ((created_at >= '2026-01-15 00:00:00+00'::timestamp with time zone) AND (created_at < '2026-01-16 00:00:00+00'::timestamp with time zone))
+                    Filter: ((is_balance_impacted IS TRUE) AND (transaction_class <> ALL ('{Commission,Charge,StampDuty}'::text[])))
+                    Rows Removed by Filter: 1214
+                    Index Searches: 1
+                    Buffers: shared hit=927
+              ->  Index Scan using accounts_pkey on accounts a  (cost=0.29..0.33 rows=1 width=34) (actual time=0.001..0.001 rows=0.99 loops=1013)
+                    Index Cond: (id = t.account_id)
+                    Filter: ((t.transaction_class <> 'Internal'::text) OR (account_type <> 'Commission'::text))
+                    Rows Removed by Filter: 0
+                    Index Searches: 1013
+                    Buffers: shared hit=3039
+Planning:
+  Buffers: shared hit=237
+Planning Time: 0.458 ms
+Execution Time: 2.679 ms

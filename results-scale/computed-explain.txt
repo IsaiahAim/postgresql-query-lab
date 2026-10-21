@@ -1,0 +1,30 @@
+Limit  (cost=21830.10..21946.56 rows=1000 width=51) (actual time=44.723..47.248 rows=1000.00 loops=1)
+  Buffers: shared hit=11920
+  ->  Gather Merge  (cost=21830.10..22092.84 rows=2256 width=51) (actual time=44.722..47.177 rows=1000.00 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=11920
+        ->  Sort  (cost=20830.07..20832.42 rows=940 width=51) (actual time=43.300..43.337 rows=785.00 loops=3)
+              Sort Key: t.created_at DESC, t.id DESC
+              Sort Method: top-N heapsort  Memory: 314kB
+              Buffers: shared hit=11920
+              Worker 0:  Sort Method: top-N heapsort  Memory: 314kB
+              Worker 1:  Sort Method: top-N heapsort  Memory: 314kB
+              ->  Hash Join  (cost=319.00..20783.65 rows=940 width=51) (actual time=1.819..41.910 rows=5018.67 loops=3)
+                    Hash Cond: (t.account_id = a.id)
+                    Join Filter: ((t.transaction_class <> 'Internal'::text) OR (a.account_type <> 'Commission'::text))
+                    Rows Removed by Join Filter: 63
+                    Buffers: shared hit=11890
+                    ->  Parallel Seq Scan on transactions t  (cost=0.00..20462.17 rows=947 width=51) (actual time=0.015..38.377 rows=5081.33 loops=3)
+                          Filter: ((is_balance_impacted IS TRUE) AND (transaction_class <> ALL ('{Commission,Charge,StampDuty}'::text[])) AND (((created_at AT TIME ZONE 'UTC'::text))::date = '2026-01-15'::date))
+                          Rows Removed by Filter: 328252
+                          Buffers: shared hit=11608
+                    ->  Hash  (cost=194.00..194.00 rows=10000 width=34) (actual time=1.770..1.770 rows=10000.00 loops=3)
+                          Buckets: 16384  Batches: 1  Memory Usage: 842kB
+                          Buffers: shared hit=282
+                          ->  Seq Scan on accounts a  (cost=0.00..194.00 rows=10000 width=34) (actual time=0.005..0.680 rows=10000.00 loops=3)
+                                Buffers: shared hit=282
+Planning:
+  Buffers: shared hit=235
+Planning Time: 0.420 ms
+Execution Time: 47.374 ms

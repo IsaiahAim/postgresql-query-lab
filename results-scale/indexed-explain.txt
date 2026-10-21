@@ -1,0 +1,18 @@
+Limit  (cost=0.71..2630.80 rows=1000 width=51) (actual time=0.023..1.861 rows=1000.00 loops=1)
+  Buffers: shared hit=3714
+  ->  Nested Loop  (cost=0.71..47989.33 rows=18246 width=51) (actual time=0.022..1.801 rows=1000.00 loops=1)
+        Buffers: shared hit=3714
+        ->  Index Scan using lab_transactions_feed_idx on transactions t  (cost=0.42..41658.76 rows=18377 width=51) (actual time=0.012..0.708 rows=1010.00 loops=1)
+              Index Cond: ((created_at >= '2026-01-15 00:00:00+00'::timestamp with time zone) AND (created_at < '2026-01-16 00:00:00+00'::timestamp with time zone))
+              Index Searches: 1
+              Buffers: shared hit=684
+        ->  Index Scan using accounts_pkey on accounts a  (cost=0.29..0.33 rows=1 width=34) (actual time=0.001..0.001 rows=0.99 loops=1010)
+              Index Cond: (id = t.account_id)
+              Filter: ((t.transaction_class <> 'Internal'::text) OR (account_type <> 'Commission'::text))
+              Rows Removed by Filter: 0
+              Index Searches: 1010
+              Buffers: shared hit=3030
+Planning:
+  Buffers: shared hit=260
+Planning Time: 0.488 ms
+Execution Time: 1.910 ms

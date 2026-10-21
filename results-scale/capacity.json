@@ -1,0 +1,16 @@
+{
+  "recorded_at_utc": "2026-10-09T03:03:24.644799+00:00",
+  "target_rows": 500000000,
+  "pilot_rows": 1000000,
+  "pilot_size": {
+    "heap_bytes": 95141888,
+    "indexes_bytes": 46407680,
+    "total_bytes": 141549568
+  },
+  "host_available_bytes": 39702241280,
+  "container_available_bytes": 987830702080,
+  "projected_relation_bytes": 70774784000,
+  "required_free_bytes_heuristic": 157655695360,
+  "status": "blocked_insufficient_storage",
+  "note": "Projection only; 500 million rows have NOT been loaded if blocked. The multiplier allows rough WAL/index-build headroom; actual demand can differ."
+}

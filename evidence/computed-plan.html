@@ -1,0 +1,31 @@
+<!doctype html><html><meta charset="utf-8"><title>Before: computed UTC date filter</title><style>*{box-sizing:border-box}body{margin:0;background:#edf2f5;color:#142d3b;font-family:Arial,sans-serif;padding:48px}main{max-width:1180px;margin:auto;background:white;padding:40px;border-top:8px solid #19768c}small{color:#34738a;font-weight:bold;letter-spacing:2px}h1{font-size:34px;margin:14px 0}p{font-size:18px;line-height:1.6;color:#425c6b}pre{font:15px/1.6 monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#102532;color:#e1f0f3;padding:24px;border-radius:8px}table{width:100%;border-collapse:collapse;font-size:19px;margin:24px 0}th{text-align:left;background:#e5f0f3}th,td{padding:20px 14px;border-bottom:1px solid #cfdee5}.cards{display:flex;gap:16px;margin:24px 0}.card{flex:1;padding:24px;background:#edf5f7;font-size:17px}.card strong{display:block;font-size:34px;margin-bottom:10px}.note{border-left:5px solid #e6a24a;padding:14px 20px;background:#fff6e8}footer{font-size:14px;color:#607c8a;border-top:1px solid #ddd;margin-top:28px;padding-top:16px}</style><main><small>POSTGRESQL LAB / SAVED EVIDENCE</small><h1>Before: computed UTC date filter</h1><p>Actual EXPLAIN (ANALYZE, BUFFERS) output. PostgreSQL 18.6 · 1,000,000 transactions · LIMIT 1,000.</p><pre>Limit  (cost=21830.10..21946.56 rows=1000 width=51) (actual time=44.723..47.248 rows=1000.00 loops=1)
+  Buffers: shared hit=11920
+  -&gt;  Gather Merge  (cost=21830.10..22092.84 rows=2256 width=51) (actual time=44.722..47.177 rows=1000.00 loops=1)
+        Workers Planned: 2
+        Workers Launched: 2
+        Buffers: shared hit=11920
+        -&gt;  Sort  (cost=20830.07..20832.42 rows=940 width=51) (actual time=43.300..43.337 rows=785.00 loops=3)
+              Sort Key: t.created_at DESC, t.id DESC
+              Sort Method: top-N heapsort  Memory: 314kB
+              Buffers: shared hit=11920
+              Worker 0:  Sort Method: top-N heapsort  Memory: 314kB
+              Worker 1:  Sort Method: top-N heapsort  Memory: 314kB
+              -&gt;  Hash Join  (cost=319.00..20783.65 rows=940 width=51) (actual time=1.819..41.910 rows=5018.67 loops=3)
+                    Hash Cond: (t.account_id = a.id)
+                    Join Filter: ((t.transaction_class &lt;&gt; &#x27;Internal&#x27;::text) OR (a.account_type &lt;&gt; &#x27;Commission&#x27;::text))
+                    Rows Removed by Join Filter: 63
+                    Buffers: shared hit=11890
+                    -&gt;  Parallel Seq Scan on transactions t  (cost=0.00..20462.17 rows=947 width=51) (actual time=0.015..38.377 rows=5081.33 loops=3)
+                          Filter: ((is_balance_impacted IS TRUE) AND (transaction_class &lt;&gt; ALL (&#x27;{Commission,Charge,StampDuty}&#x27;::text[])) AND (((created_at AT TIME ZONE &#x27;UTC&#x27;::text))::date = &#x27;2026-01-15&#x27;::date))
+                          Rows Removed by Filter: 328252
+                          Buffers: shared hit=11608
+                    -&gt;  Hash  (cost=194.00..194.00 rows=10000 width=34) (actual time=1.770..1.770 rows=10000.00 loops=3)
+                          Buckets: 16384  Batches: 1  Memory Usage: 842kB
+                          Buffers: shared hit=282
+                          -&gt;  Seq Scan on accounts a  (cost=0.00..194.00 rows=10000 width=34) (actual time=0.005..0.680 rows=10000.00 loops=3)
+                                Buffers: shared hit=282
+Planning:
+  Buffers: shared hit=235
+Planning Time: 0.420 ms
+Execution Time: 47.374 ms
+</pre><p>One additional capture run; its execution time is not the five-run median.</p><footer>Isaiah Aimiton · Reproduced October 9, 2026 · Screenshots of a report built from saved output</footer></main></html>

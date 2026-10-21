@@ -1,0 +1,19 @@
+<!doctype html><html><meta charset="utf-8"><title>After: range filter + partial index</title><style>*{box-sizing:border-box}body{margin:0;background:#edf2f5;color:#142d3b;font-family:Arial,sans-serif;padding:48px}main{max-width:1180px;margin:auto;background:white;padding:40px;border-top:8px solid #19768c}small{color:#34738a;font-weight:bold;letter-spacing:2px}h1{font-size:34px;margin:14px 0}p{font-size:18px;line-height:1.6;color:#425c6b}pre{font:15px/1.6 monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#102532;color:#e1f0f3;padding:24px;border-radius:8px}table{width:100%;border-collapse:collapse;font-size:19px;margin:24px 0}th{text-align:left;background:#e5f0f3}th,td{padding:20px 14px;border-bottom:1px solid #cfdee5}.cards{display:flex;gap:16px;margin:24px 0}.card{flex:1;padding:24px;background:#edf5f7;font-size:17px}.card strong{display:block;font-size:34px;margin-bottom:10px}.note{border-left:5px solid #e6a24a;padding:14px 20px;background:#fff6e8}footer{font-size:14px;color:#607c8a;border-top:1px solid #ddd;margin-top:28px;padding-top:16px}</style><main><small>POSTGRESQL LAB / SAVED EVIDENCE</small><h1>After: range filter + partial index</h1><p>Actual EXPLAIN (ANALYZE, BUFFERS) output. PostgreSQL 18.6 · 1,000,000 transactions · LIMIT 1,000.</p><pre>Limit  (cost=0.71..2630.80 rows=1000 width=51) (actual time=0.023..1.861 rows=1000.00 loops=1)
+  Buffers: shared hit=3714
+  -&gt;  Nested Loop  (cost=0.71..47989.33 rows=18246 width=51) (actual time=0.022..1.801 rows=1000.00 loops=1)
+        Buffers: shared hit=3714
+        -&gt;  Index Scan using lab_transactions_feed_idx on transactions t  (cost=0.42..41658.76 rows=18377 width=51) (actual time=0.012..0.708 rows=1010.00 loops=1)
+              Index Cond: ((created_at &gt;= &#x27;2026-01-15 00:00:00+00&#x27;::timestamp with time zone) AND (created_at &lt; &#x27;2026-01-16 00:00:00+00&#x27;::timestamp with time zone))
+              Index Searches: 1
+              Buffers: shared hit=684
+        -&gt;  Index Scan using accounts_pkey on accounts a  (cost=0.29..0.33 rows=1 width=34) (actual time=0.001..0.001 rows=0.99 loops=1010)
+              Index Cond: (id = t.account_id)
+              Filter: ((t.transaction_class &lt;&gt; &#x27;Internal&#x27;::text) OR (account_type &lt;&gt; &#x27;Commission&#x27;::text))
+              Rows Removed by Filter: 0
+              Index Searches: 1010
+              Buffers: shared hit=3030
+Planning:
+  Buffers: shared hit=260
+Planning Time: 0.488 ms
+Execution Time: 1.910 ms
+</pre><p>One additional capture run; its execution time is not the five-run median.</p><footer>Isaiah Aimiton · Reproduced October 9, 2026 · Screenshots of a report built from saved output</footer></main></html>
